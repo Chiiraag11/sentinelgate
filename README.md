@@ -14,6 +14,14 @@ a week. SentinelGate's core design decision is **baseline diffing**: it only
 ever blocks a merge on findings *newly introduced by that PR*, never on
 issues that were already in the codebase.
 
+## Test Results
+
+SentinelGate includes a comprehensive automated test suite covering the data model, OWASP/CWE mapping, scanner wrappers, normalization, risk scoring, baseline diffing, and report generation.
+
+**52/52 tests passing**
+
+![Test Results](testrun.png)
+
 ## Architecture
 
 ```
