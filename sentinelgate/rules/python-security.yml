@@ -1,0 +1,106 @@
+rules:
+  - id: python.sql-injection-string-concat
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A SQL query is built via string concatenation/formatting and then
+      passed to execute(), rather than using parameterized placeholders.
+      This flow is tracked through intermediate variables (e.g.
+      `query = "..." + var; cursor.execute(query)`), not just inline calls.
+    metadata:
+      cwe: ["CWE-89"]
+      shortlink: sqli
+    mode: taint
+    pattern-sources:
+      - pattern-either:
+          - pattern: "'...' + $VAR"
+          - pattern: $VAR + '...'
+          - pattern: f"...{$VAR}..."
+          - pattern: "'...'.format(...)"
+          - pattern: "'...' % $VAR"
+    pattern-sinks:
+      - pattern: $CURSOR.execute(...)
+
+
+  - id: python.command-injection-subprocess-shell-true
+    languages: [python]
+    severity: ERROR
+    message: >-
+      subprocess call built from concatenated/formatted input with
+      shell=True. This allows arbitrary shell command injection.
+    metadata:
+      cwe: ["CWE-78"]
+      shortlink: command-injection
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.call("..." + $VAR, shell=True, ...)
+          - pattern: subprocess.call($X, shell=True, ...)
+          - pattern: subprocess.run("..." + $VAR, shell=True, ...)
+          - pattern: subprocess.Popen("..." + $VAR, shell=True, ...)
+          - pattern: os.system("..." + $VAR)
+          - pattern: os.system(f"...{$VAR}...")
+
+  - id: python.eval-detected
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Use of eval() detected. This is a code-injection risk if the
+      argument is influenced by untrusted input.
+    metadata:
+      cwe: ["CWE-94"]
+    patterns:
+      - pattern: eval(...)
+
+  - id: python.insecure-deserialization-pickle
+    languages: [python]
+    severity: ERROR
+    message: >-
+      pickle.loads()/pickle.load() on data that may come from an
+      untrusted source can lead to arbitrary code execution.
+    metadata:
+      cwe: ["CWE-502"]
+      shortlink: deserialization
+    patterns:
+      - pattern-either:
+          - pattern: pickle.loads(...)
+          - pattern: pickle.load(...)
+
+  - id: python.unescaped-html-output
+    languages: [python]
+    severity: WARNING
+    message: >-
+      String concatenation into HTML output without escaping. If this
+      value reaches a browser, it can lead to XSS.
+    metadata:
+      cwe: ["CWE-79"]
+      shortlink: xss
+    patterns:
+      - pattern-either:
+          - pattern: "'<' + ... + $VAR + ... + '>'"
+          - pattern: return "..." + $VAR + "..."
+          - pattern: return f"...<{$TAG}>...{$VAR}...</{$TAG}>..."
+    paths:
+      include:
+        - "*.py"
+
+  - id: python.yaml-unsafe-load
+    languages: [python]
+    severity: ERROR
+    message: >-
+      yaml.load() without an explicit safe Loader can execute arbitrary
+      Python objects embedded in the YAML document.
+    metadata:
+      cwe: ["CWE-502"]
+      shortlink: deserialization
+    pattern: yaml.load($DATA)
+
+  - id: python.hardcoded-bind-all-interfaces
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Binding a server to 0.0.0.0 exposes it on all network interfaces,
+      which is usually unintended outside of containerized deployments.
+    metadata:
+      cwe: ["CWE-16"]
+      shortlink: misconfiguration
+    pattern: $APP.run(host="0.0.0.0", ...)

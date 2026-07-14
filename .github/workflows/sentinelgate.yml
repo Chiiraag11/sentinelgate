@@ -1,0 +1,53 @@
+name: SentinelGate Security Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # On every push to main, snapshot current findings as the baseline so PR
+  # scans only ever block on NEW findings, not pre-existing tech debt.
+  update-baseline:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SentinelGate
+        run: pip install "sentinelgate @ git+https://github.com/Chiiraag11/sentinelgate.git"
+      - name: Save baseline
+        run: sentinelgate baseline-save . --branch main
+      - name: Cache baseline DB
+        uses: actions/cache/save@v4
+        with:
+          path: .sentinelgate/baseline.db
+          key: sentinelgate-baseline-main-${{ github.sha }}
+
+  # On every PR, scan and diff against the latest saved baseline.
+  scan-pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore baseline DB
+        uses: actions/cache/restore@v4
+        with:
+          path: .sentinelgate/baseline.db
+          key: sentinelgate-baseline-main-
+          restore-keys: sentinelgate-baseline-main-
+
+      - name: Run SentinelGate
+        uses: Chiiraag11/sentinelgate@v1
+        with:
+          target-dir: "."
+          fail-on: high
+          baseline-branch: main
+          post-comment: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

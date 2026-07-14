@@ -1,0 +1,125 @@
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ==========================
+# Testing
+# ==========================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# ==========================
+# Type checkers / Linters
+# ==========================
+.mypy_cache/
+.pyre/
+.ruff_cache/
+.pytype/
+
+# ==========================
+# IDEs
+# ==========================
+.vscode/
+.idea/
+*.code-workspace
+
+# ==========================
+# OS files
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Logs
+# ==========================
+*.log
+logs/
+*.out
+
+# ==========================
+# Environment Variables
+# ==========================
+.env
+.env.*
+!.env.example
+
+# ==========================
+# Security Reports
+# ==========================
+reports/
+*.sarif
+*.json
+*.html
+*.md
+
+# Keep sample reports if needed
+!sample_reports/
+
+# ==========================
+# Scanner Output
+# ==========================
+.baseline.json
+findings.json
+scan_results.json
+security-report.*
+*.tmp
+
+# ==========================
+# Semgrep
+# ==========================
+.semgrep/
+.semgrep_logs/
+
+# ==========================
+# Detect Secrets
+# ==========================
+.secrets.baseline
+
+# ==========================
+# pip-audit
+# ==========================
+pip-audit-report.*
+
+# ==========================
+# Coverage
+# ==========================
+coverage.xml
+
+# ==========================
+# Jupyter
+# ==========================
+.ipynb_checkpoints/
+
+# ==========================
+# Local databases
+# ==========================
+*.db
+*.sqlite
+*.sqlite3
+
+# ==========================
+# Misc
+# ==========================
+.cache/
+temp/
+tmp/

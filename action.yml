@@ -1,0 +1,89 @@
+name: "SentinelGate"
+description: "CI/CD security gate: aggregates SAST, secret, and dependency scanners into one triaged, OWASP-mapped PR report."
+branding:
+  icon: "shield"
+  color: "red"
+
+inputs:
+  target-dir:
+    description: "Directory to scan"
+    required: false
+    default: "."
+  fail-on:
+    description: "Minimum severity of a NEW finding that fails the build (critical|high|medium|low|info)"
+    required: false
+    default: "high"
+  baseline-branch:
+    description: "Branch name to diff against a saved baseline. Leave empty to scan everything as new."
+    required: false
+    default: ""
+  post-comment:
+    description: "Whether to post/update a PR comment with the report (true|false)"
+    required: false
+    default: "true"
+  github-token:
+    description: "Token used to post the PR comment. Defaults to the workflow's GITHUB_TOKEN."
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  gate-result:
+    description: "'passed' or 'failed'"
+    value: ${{ steps.run-scan.outputs.gate_result }}
+  report-path:
+    description: "Path to the generated markdown report"
+    value: ${{ steps.run-scan.outputs.report_path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install SentinelGate
+      shell: bash
+      run: pip install "sentinelgate @ git+https://github.com/Chiiraag11/sentinelgate.git"
+
+    - name: Run scan
+      id: run-scan
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set +e
+        BASELINE_ARGS=""
+        if [ -n "${{ inputs.baseline-branch }}" ]; then
+          BASELINE_ARGS="--baseline-branch ${{ inputs.baseline-branch }}"
+        fi
+
+        POST_ARGS=""
+        if [ "${{ inputs.post-comment }}" = "true" ] && [ -n "${{ github.event.pull_request.number }}" ]; then
+          POST_ARGS="--post-pr ${{ github.repository }}#${{ github.event.pull_request.number }}"
+        fi
+
+        sentinelgate scan "${{ inputs.target-dir }}" \
+          --fail-on "${{ inputs.fail-on }}" \
+          $BASELINE_ARGS \
+          --markdown-out sentinelgate-report.md \
+          --json-out sentinelgate-findings.json \
+          $POST_ARGS
+        exit_code=$?
+
+        echo "report_path=sentinelgate-report.md" >> "$GITHUB_OUTPUT"
+        if [ $exit_code -eq 0 ]; then
+          echo "gate_result=passed" >> "$GITHUB_OUTPUT"
+        else
+          echo "gate_result=failed" >> "$GITHUB_OUTPUT"
+        fi
+        exit $exit_code
+
+    - name: Upload report artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: sentinelgate-report
+        path: |
+          sentinelgate-report.md
+          sentinelgate-findings.json

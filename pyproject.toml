@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sentinelgate"
+version = "1.0.0"
+description = "A CI/CD security gate: aggregates SAST, secrets, and dependency scanners into one triaged, OWASP-mapped PR report."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "click>=8.1",
+    "semgrep>=1.60",
+    "detect-secrets>=1.5",
+    "pip-audit>=2.7",
+    "PyGithub>=2.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+sentinelgate = "sentinelgate.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sentinelgate*"]
+
+[tool.setuptools.package-data]
+sentinelgate = ["rules/*.yml"]
