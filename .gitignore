@@ -70,7 +70,6 @@ reports/
 *.sarif
 *.json
 *.html
-*.md
 
 # Keep sample reports if needed
 !sample_reports/
